@@ -1,101 +1,46 @@
-import tkinter.messagebox as messagebox
-from models.anggota_model import AnggotaModel
-from views.anggota_view import AnggotaView
+from tkinter import messagebox
 
 class AnggotaController:
-    def __init__(self):
-        self.model = AnggotaModel()
-        self.view = AnggotaView()
-        self.selected_id = None
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
 
-        self.view.btn_simpan.configure(command=self.simpan_data)
-        if hasattr(self.view, 'btn_hapus'):
-            self.view.btn_hapus.configure(command=self.hapus_data)
-        if hasattr(self.view, 'btn_perbarui'):
-            self.view.btn_perbarui.configure(command=self.perbarui_data)
+        # Pasang fungsi tombol simpan
+        self.view.btn_simpan.config(command=self.simpan_anggota)
+        
+        # Ambil data asli dari MySQL Laragon saat dibuka
+        self.load_data()
 
-        self.view.tabel.bind("<ButtonRelease-1>", self.pilih_data_tabel)
-        self.muat_data_tabel()
+    def load_data(self):
+        # Bersihkan tabel GUI dulu
+        for item in self.view.tree.get_children():
+            self.view.tree.delete(item)
 
-    def muat_data_tabel(self):
-        for item in self.view.tabel.get_children():
-            self.view.tabel.delete(item)
+        try:
+            # Mengambil 7 data asli yang sudah kamu INSERT di MySQL Laragon
+            data_anggota = self.model.get_all_anggota()
 
-        data_anggota = self.model.get_all_anggota()
-        for anggota in data_anggota:
-            self.view.tabel.insert("", "end", values=(anggota['id_anggota'], anggota['nama'], anggota['email'], anggota['no_telepon']))
+            for row in data_anggota:
+                if isinstance(row, dict):
+                    vals = list(row.values())
+                else:
+                    vals = row
+                self.view.tree.insert("", "end", values=vals)
+        except Exception as e:
+            messagebox.showerror("Error Load Data", f"Gagal mengambil data dari MySQL:\n{e}")
 
-    def simpan_data(self):
-        nama = self.view.entry_nama.get()
-        email = self.view.entry_email.get()
-        no_telepon = self.view.entry_no_telepon.get()
+    def simpan_anggota(self):
+        nama = self.view.ent_nama.get().strip()
+        alamat = self.view.txt_alamat.get("1.0", "end-1c").strip()
 
-        if not nama or not email or not no_telepon:
-            messagebox.showwarning("Peringatan", "Semua kolom form harus diisi!")
+        if not nama or not alamat:
+            messagebox.showwarning("Peringatan", "Nama Anggota dan Alamat harus diisi!")
             return
 
-        berhasil = self.model.create_anggota(nama, email, no_telepon)
-        if berhasil:
-            messagebox.showinfo("Sukses", "Data anggota berhasil disimpan!")
-            self.bersihkan_form()
-            self.muat_data_tabel()
-        else:
-            messagebox.showerror("Error", "Terjadi kesalahan saat menyimpan data.")
-
-    def pilih_data_tabel(self, event):
-        selected_item = self.view.tabel.selection()
-        if selected_item:
-            item = self.view.tabel.item(selected_item)
-            values = item['values']
-            self.selected_id = values[0]
-
-            self.bersihkan_form()
-            self.view.entry_nama.insert(0, values[1])
-            self.view.entry_email.insert(0, values[2])
-            self.view.entry_no_telepon.insert(0, values[3])
-
-    def perbarui_data(self):
-        if not self.selected_id:
-            messagebox.showwarning("Peringatan", "Pilih data dari tabel terlebih dahulu!")
-            return
-
-        nama = self.view.entry_nama.get()
-        email = self.view.entry_email.get()
-        no_telepon = self.view.entry_no_telepon.get()
-
-        if not nama or not email or not no_telepon:
-            messagebox.showwarning("Peringatan", "Semua kolom form harus diisi!")
-            return
-
-        berhasil = self.model.update_anggota(self.selected_id, nama, email, no_telepon)
-        if berhasil:
-            messagebox.showinfo("Sukses", "Data anggota berhasil diperbarui!")
-            self.bersihkan_form()
-            self.muat_data_tabel()
-            self.selected_id = None
-        else:
-            messagebox.showerror("Error", "Gagal memperbarui data anggota.")
-
-    def hapus_data(self):
-        if not self.selected_id:
-            messagebox.showwarning("Peringatan", "Pilih data dari tabel yang ingin dihapus!")
-            return
-
-        konfirmasi = messagebox.askyesno("Konfirmasi", "Apakah Anda yakin ingin menghapus data ini?")
-        if konfirmasi:
-            berhasil = self.model.delete_anggota(self.selected_id)
-            if berhasil:
-                messagebox.showinfo("Sukses", "Data anggota berhasil dihapus!")
-                self.bersihkan_form()
-                self.muat_data_tabel()
-                self.selected_id = None
-            else:
-                messagebox.showerror("Error", "Gagal menghapus data anggota.")
-
-    def bersihkan_form(self):
-        self.view.entry_nama.delete(0, 'end')
-        self.view.entry_email.delete(0, 'end')
-        self.view.entry_no_telepon.delete(0, 'end')
-
-    def run(self):
-        self.view.mainloop()
+        try:
+            self.model.add_anggota(nama, alamat)
+            self.load_data()
+            self.view.clear_inputs()
+            messagebox.showinfo("Sukses", "Data anggota berhasil disimpan ke database!")
+        except Exception as e:
+            messagebox.showerror("Error Database", f"Gagal menyimpan data:\n{e}")

@@ -1,52 +1,43 @@
-from config.database import Database
+from config.database import get_db_connection
 
 class BukuModel:
     def __init__(self):
-        self.db = Database()
-        self.conn = self.db.get_connection()
-        self.table_name = "buku"
+        pass
 
     def get_all_buku(self):
-        if self.conn:
-            cursor = self.conn.cursor(dictionary=True)
-            query = f"SELECT * FROM {self.table_name}"
-            cursor.execute(query)
-            result = cursor.fetchall()
-            cursor.close()
-            return result
-        return []
+        """Mengambil seluruh data buku dari database"""
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = "SELECT * FROM buku"
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return result
+
+    def add_buku(self, judul, penulis, tahun_terbit):
+        """Menambahkan buku baru ke database"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "INSERT INTO buku (judul, penulis, tahun_terbit) VALUES (%s, %s, %s)"
+        cursor.execute(query, (judul, penulis, tahun_terbit))
+        conn.commit()
+        cursor.close()
+        conn.close()
 
     def create_buku(self, judul, penulis, tahun_terbit):
-        if self.conn:
-            cursor = self.conn.cursor()
-            query = f"INSERT INTO {self.table_name} (judul, penulis, tahun_terbit) VALUES (%s, %s, %s)"
-            val = (judul, penulis, tahun_terbit)
-            cursor.execute(query, val)
-            self.conn.commit()
-            cursor.close()
-            return True
-        return False
+        """Alias method untuk add_buku agar mendukung runner testing"""
+        return self.add_buku(judul, penulis, tahun_terbit)
 
-    # Tambahan metode UPDATE (Nomor 1)
-    def update_buku(self, id_buku, judul, penulis, tahun_terbit):
-        if self.conn:
-            cursor = self.conn.cursor()
-            query = f"UPDATE {self.table_name} SET judul = %s, penulis = %s, tahun_terbit = %s WHERE id_buku = %s"
-            val = (judul, penulis, tahun_terbit, id_buku)
-            cursor.execute(query, val)
-            self.conn.commit()
-            cursor.close()
-            return True
-        return False
-
-    # Tambahan metode DELETE (Nomor 1)
     def delete_buku(self, id_buku):
-        if self.conn:
-            cursor = self.conn.cursor()
-            query = f"DELETE FROM {self.table_name} WHERE id_buku = %s"
-            val = (id_buku,)
-            cursor.execute(query, val)
-            self.conn.commit()
-            cursor.close()
-            return True
-        return False
+        """Menghapus data buku berdasarkan ID"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Gunakan 'id_buku' atau 'id' sesuai dengan nama kolom primary key di database Anda
+        query = "DELETE FROM buku WHERE id_buku = %s"
+        
+        cursor.execute(query, (id_buku,))
+        conn.commit()
+        cursor.close()
+        conn.close()
