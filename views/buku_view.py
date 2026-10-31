@@ -37,6 +37,9 @@ class BukuView(tk.Frame):
         self.btn_hapus = Button(frame_form, text="Hapus Data (Delete)", bg="#dc3545", fg="white", font=("Helvetica", 9, "bold"), pady=5)
         self.btn_hapus.pack(fill="x", pady=4)
 
+        self.btn_logout = Button(frame_form, text="Logout", bg="#6c757d", fg="white", font=("Helvetica", 9, "bold"), pady=5)
+        self.btn_logout.pack(fill="x", pady=(20, 4))
+
         # ---------------- Table Right Frame ----------------
         frame_table = LabelFrame(self, text="Daftar Koleksi Buku", font=("Helvetica", 10, "bold"), padx=10, pady=10)
         frame_table.pack(side="right", fill="both", expand=True)

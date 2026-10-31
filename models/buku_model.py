@@ -41,3 +41,13 @@ class BukuModel:
         conn.commit()
         cursor.close()
         conn.close()
+        
+    def update_buku(self, id_buku, judul, penulis, tahun_terbit):
+        """Memperbarui data buku berdasarkan ID"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "UPDATE buku SET judul = %s, penulis = %s, tahun_terbit = %s WHERE id_buku = %s"
+        cursor.execute(query, (judul, penulis, tahun_terbit, id_buku))
+        conn.commit()
+        cursor.close()
+        conn.close()
